@@ -1,12 +1,14 @@
 {
-   "build" : {
-        "src" : "ml_api.py",
-        "use" : "@vercel/python"
-    },
-    "routes": [
-        {
-            "src":"/(.*)",
-            "dest" : "ml_api.py"
-        }
-    ]
+  "builds": [
+    {
+      "src": "main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "main.py"
+    }
+  ]
 }

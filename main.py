@@ -1,17 +1,9 @@
-# -*- coding: utf-8 -*-
-"""
-Spyder Editor
-
-This is a temporary script file.
-"""
-
 from fastapi import FastAPI,Request
 from fastapi.middleware.cors import CORSMiddleware 
 from pydantic import BaseModel
 import pickle 
 import json 
 import numpy as np
-import jsonify
 
 app = FastAPI()
 
