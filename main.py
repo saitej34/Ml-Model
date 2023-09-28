@@ -6,35 +6,18 @@ import json
 import numpy as np
 from time import time
 from fastapi import FastAPI, __version__
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
 
 
 
 app = FastAPI()
 
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-html = f"""
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>FastAPI on Vercel</title>
-        <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
-    </head>
-    <body>
-        <div class="bg-gray-200 p-4 rounded-lg shadow-lg">
-            <h1>Hello from FastAPI@{__version__}</h1>
-            <ul>
-                <li><a href="/docs">/docs</a></li>
-                <li><a href="/redoc">/redoc</a></li>
-            </ul>
-            <p>Powered by <a href="https://vercel.com" target="_blank">Vercel</a></p>
-        </div>
-    </body>
-</html>
-"""
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 
@@ -63,15 +46,20 @@ class model_input(BaseModel):
     slope:int
     ca:int
     thal:int
+
+
+
+    
     
 heart_model = pickle.load(open('heart_disease_model.sav','rb'))
 
 diabetes_model = pickle.load(open('diabetes_model.sav','rb'))
 
 
+
 @app.get("/")
 async def root():
-    return HTMLResponse(html)
+    return "Hello World"
 
 
 
@@ -103,11 +91,6 @@ def read_root(input_parameters : model_input):
     input_data_reshaped = input_data_as_numpy_array.reshape(1,-1)
     
     print(input_data_reshaped)
-    
-    
-    
-    
-    
         
     #input_list = [age,sex,cp,trestbps,chol,fbs,restecg,thalach,exang,oldpeak,slope,ca,thal]
     
@@ -120,31 +103,53 @@ def read_root(input_parameters : model_input):
 
 
 
+
 @app.post('/diabetesprediction')
-def read_root(input_parameters : dia_model):
-    input_data = input_parameters.json() 
-    input_dictionary = json.loads(input_data) 
-    Preg = input_dictionary['Pregnancies']
-    glu = input_dictionary['Glucose']
-    bp = input_dictionary['BloodPressure']
-    skt = input_dictionary['SkinThickness']
-    ins = input_dictionary['Insulin']
-    bmi = input_dictionary['BMI']
-    dpf = input_dictionary['DiabetesPedigreeFunction']
-    age = input_dictionary['Age']
-    
-    input_d = (Preg,glu,bp,skt,ins,bmi,dpf,age)
+def read_root(input_parameters: dict):
+    try:
+        Preg = input_parameters['Pregnancies']
+        glu = input_parameters['Glucose']
+        bp = input_parameters['BloodPressure']
+        skt = input_parameters['SkinThickness']
+        ins = input_parameters['Insulin']
+        bmi = input_parameters['BMI']
+        dpf = input_parameters['DiabetesPedigreeFunction']
+        age = input_parameters['Age']
+        
+        input_d = (Preg, glu, bp, skt, ins, bmi, dpf, age)
 
-    input_data_as_numpy_array= np.asarray(input_d)
-    input_data_reshaped = input_data_as_numpy_array.reshape(1,-1)
-    
-    
-    result = diabetes_model.predict(input_data_reshaped)
-    
+        input_data_as_numpy_array = np.asarray(input_d)
+        input_data_reshaped = input_data_as_numpy_array.reshape(1, -1)
 
-    if(result[0] == 0):
-        return "The Person has no Diabetes"
-    return "The Person has Diabetes"
+        # Perform prediction using diabetes_model
+        result = diabetes_model.predict(input_data_reshaped)
+        print(result)
+        if result[0] == 0:
+            return "The Person has no Diabetes"
+        return "The Person has Diabetes"
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+# @app.post('/dietrec')
+# def read_root(input_parameters : diet_model):
+#     input_data = input_parameters.json() 
+#     input_dictionary = json.loads(input_data) 
+#     bmi = input_dictionary['Pregnancies']
+#     input_nutrition = [250, 15, 2, 80, 150, 30,5,3,20]
+#     if bmi < 18.5:
+#         input_ingredients = ['rice', 'eggs', 'beans', 'bananas', 'apples', 'carrots']
+#     elif bmi < 25:
+#         input_ingredients = ['oats', 'chicken', 'yogurt', 'spinach', 'berries', 'nuts']
+#     elif bmi < 30:
+#         input_ingredients = ['brown rice', 'salmon', 'sweet potato', 'quinoa', 'tomatoes', 'bell peppers']
+#     else:
+#         input_ingredients = ['kale', 'tofu', 'broccoli', 'mushrooms', 'cauliflower','garlic']
+    
+#     recommendation_dataframe = diet_mod.recommend(input_nutrition,input_ingredients)
+#     output = diet_mod.output_recommended_recipes(recommendation_dataframe)
+
+#     return output
+
     
     
     
